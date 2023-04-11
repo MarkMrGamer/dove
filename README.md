@@ -1,7 +1,10 @@
 # D.O.V.E
-D.O.V.E is a JAVA game made in a disastrous way. 
+D.O.V.E (Degenerated Ordinary Verbose Environment) is a JAVA game made in a disastrous way. 
 
 ## Questions
+
+### Why did you make this?
+My final CS project
 
 ### How is this fun
 IDK
@@ -14,3 +17,6 @@ Java, with Swing painting
 
 ### How can I help?
 Of course you can but the codebase is terrible so
+
+### How many levels does this game have currently?
+4
