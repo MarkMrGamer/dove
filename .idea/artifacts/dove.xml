@@ -1,0 +1,12 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="dove">
+    <output-path>$PROJECT_DIR$/out/artifacts/dove</output-path>
+    <root id="archive" name="dove.jar">
+      <element id="library" level="project" name="lib" />
+      <element id="module-output" name="Dove" />
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+      </element>
+    </root>
+  </artifact>
+</component>
