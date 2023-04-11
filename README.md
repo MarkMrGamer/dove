@@ -2,10 +2,11 @@
 D.O.V.E (Degenerated Ordinary Verbose Environment) is a JAVA game made in a disastrous way. 
 
 # HOW TO COMPILE
-1. Download the source code
+1. Download the git repo
 2. Open IntelliJ IDEA or download it
-3. Compile by going to Build > Build Artifacts
-4. Success
+3. Open the source code with that
+4. Compile by going to Build > Build Artifacts
+5. Success
 
 ## Questions
 
