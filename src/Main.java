@@ -23,6 +23,7 @@ public class Main extends JComponent {
     public static int hPlayer = 32;
     public static int playerHP = 100;
     public static boolean flappy = false;
+    public static boolean inBattle = false;
     public static int flapVelo = 0;
 
     // dove
@@ -88,6 +89,7 @@ public class Main extends JComponent {
     public BufferedImage doveBg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/dove.jpg")));
     public BufferedImage coffeeBg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/coffee.png")));
     public BufferedImage roomBg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/room.png")));
+    public BufferedImage roomBg2 = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/room2.png")));
     public BufferedImage jumpscareBg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/bjumpscar.png")));
     public BufferedImage deadBg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/dovedown.png")));
     public Image mrunImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("resources/images/manrun.gif"))).getImage();
@@ -185,6 +187,11 @@ public class Main extends JComponent {
     public static boolean dead;
     public static boolean preloading = true;
     public static int damageRoll = 0;
+    public static boolean playerTurn = true;
+    public static boolean enemyTurn = false;
+    public static String dialogueMessage = "What will you do?";
+    public static int battleSelect = 0;
+    public static int cheatLevel = 0;
 
     // fonts
 
@@ -257,6 +264,22 @@ public class Main extends JComponent {
             g.drawImage(charImg, xPlayer, yPlayer, wPlayer, hPlayer, this);
         }
 
+        if (level == 4 && !dead) {
+            g.drawImage(roomBg2, 0, 0, null);
+            g.drawImage(mrunImg, xMan, yMan, wMan, hMan, this);
+            g.drawImage(charImg, xPlayer, yPlayer, wPlayer, hPlayer, this);
+            g.setColor(Color.white);
+            g.drawString("You HP: " + playerHP, 80, 339);
+            g.drawString("golden running man HP: " + manHP, 420, 269);
+
+            g.drawString(dialogueMessage, 24, 261);
+
+            if (playerTurn) {
+                if (battleSelect == 0) g.drawString("> Fight", 24, 276); else g.drawString("Fight", 24, 276);
+                if (battleSelect == 1) g.drawString("> Run", 24, 291); else g.drawString("Run", 24, 291);
+            }
+        }
+
         if (dead) {
             g.drawImage(deadBg, 0, 0, null);
         }
@@ -293,7 +316,7 @@ public class Main extends JComponent {
     static class KBListener extends KeyAdapter {
 
         public void keyPressed(KeyEvent e) {
-            if (flappy) return;
+            if (flappy || inBattle) return;
 
             System.out.println("Key pressed");
 
@@ -310,16 +333,24 @@ public class Main extends JComponent {
             if (e.getKeyCode() == KeyEvent.VK_UP) {
                 held = true;
                 direction = "up";
+
+                if (inBattle) battleSelect += 1;
             }
 
             if (e.getKeyCode() == KeyEvent.VK_DOWN) {
                 held = true;
                 direction = "down";
+
+                if (inBattle) battleSelect -= 1;
+            }
+
+            if (e.getKeyCode() == KeyEvent.VK_F && !preloading) {
+                cheatLevel = 4;
             }
         }
 
         public void keyReleased(KeyEvent e) {
-            if (flappy) return;
+            if (flappy || inBattle) return;
 
             System.out.println("Key released");
 
@@ -433,12 +464,12 @@ public class Main extends JComponent {
         JFrame frame = new GameFrame();
         soundEffects();
 
+        sequencer = MidiSystem.getSequencer(true);
+        sequencer.open();
+
         Thread.sleep(5000);
 
         preloading = false;
-
-        sequencer = MidiSystem.getSequencer(true);
-        sequencer.open();
 
         sequencer.setSequence(doveMus);
         sequencer.setLoopCount(99999);
@@ -592,23 +623,32 @@ public class Main extends JComponent {
                 level = 3;
             }
 
-            if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xMan, yMan, wMan, hMan) && level == 3) {
+            if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xMan, yMan, wMan, hMan) && level == 3 || cheatLevel == 4) {
                 if (clip.isOpen()) clip.close();
-                score += 10;
 
                 JOptionPane.showMessageDialog(null, "Running golden man: I see you broke into my house", "DOVE", JOptionPane.PLAIN_MESSAGE);
                 JOptionPane.showMessageDialog(null, "Running golden man: I will fight you", "DOVE", JOptionPane.PLAIN_MESSAGE);
                 JOptionPane.showMessageDialog(null, "level 4", "DOVE", JOptionPane.PLAIN_MESSAGE);
 
                 sequencer.stop();
-                sequencer.setSequence(doveMus7);
+
+                xPlayer = 144;
+                yPlayer = 369;                sequencer.setSequence(doveMus7);
                 sequencer.start();
 
-                xPlayer = 100;
-                yPlayer = 100;
-                
+
+                xMan = 350;
+                yMan = 291;
+
+                held = false;
+                inBattle = true;
+                cheatLevel = -1;
                 level = 4;
             }
+
+            // battle button Selection
+            if (battleSelect < 0) battleSelect = 0;
+            if (battleSelect > 1) battleSelect = 1;
 
             if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xFood, yFood, wFood, hFood) && level == 2) {
                 score += 5;
