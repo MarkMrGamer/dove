@@ -1,6 +1,13 @@
 # D.O.V.E
 D.O.V.E (Degenerated Ordinary Verbose Environment) is a JAVA game made in a disastrous way. 
 
+![alt text](https://github.com/MarkMrGamer/dove/blob/main/src/resources/images/logo.png)
+
+# Requirements
+1. Java
+2. Swing
+3. OpenJDK
+
 # HOW TO COMPILE
 1. Download the git repo
 2. Open IntelliJ IDEA or download it
