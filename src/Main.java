@@ -9,13 +9,11 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
 public class Main extends JComponent {
     // Westerbur doesn't know my programming skills on Java is terrible
-    // TODO: make battle music
     // TODO: create a turn-based battle system in level 3
 
     // main character
@@ -56,7 +54,6 @@ public class Main extends JComponent {
     public static int xTree2 = 600;
 
     // window
-
     public static int xWindow = 420;
     public static int yWindow = 0;
     public static int wWindow = 346;
@@ -64,7 +61,6 @@ public class Main extends JComponent {
     public static int windowCount = 0;
 
     // food
-
     public static int xFood = 0;
     public static int yFood = 0;
     public static int wFood = 32;
@@ -73,7 +69,6 @@ public class Main extends JComponent {
     public static int foodTime = 0;
 
     // man
-
     public static int manHP = 100;
     public static int xMan = 400;
     public static int yMan = 320;
@@ -95,7 +90,7 @@ public class Main extends JComponent {
     public BufferedImage roomBg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/room.png")));
     public BufferedImage jumpscareBg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/bjumpscar.png")));
     public BufferedImage deadBg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/dovedown.png")));
-    public Image mrunImg = new ImageIcon(getClass().getResource("resources/images/manrun.gif")).getImage();
+    public Image mrunImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("resources/images/manrun.gif"))).getImage();
 
     // sounds
     public static Clip clip;
@@ -431,6 +426,9 @@ public class Main extends JComponent {
         gameOver(frame);
     }
 
+    public static boolean coil(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2) {
+        return x1 <= (x2 + w2) && (x1 + w1) >= x2 && y1 <= (y2 + h2) && (y1 + h1) >= y2;
+    }
     public static void main(String[] args) throws IOException, MidiUnavailableException, InvalidMidiDataException, LineUnavailableException, UnsupportedAudioFileException, InterruptedException {
         JFrame frame = new GameFrame();
         soundEffects();
@@ -541,7 +539,7 @@ public class Main extends JComponent {
 
             // object collision
 
-            if (xPlayer <= (xPotato + wPotato) && (xPlayer + wPlayer) >= xPotato && yPlayer <= (yPotato + hPotato) && (yPlayer + hPlayer) >= yPotato && level == 1) {
+            if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xPotato, yPotato, wPotato, hPotato) && level == 1) {
                 score += 10;
 
                 xPlayer = 100;
@@ -566,7 +564,7 @@ public class Main extends JComponent {
                 level = 2;
             }
 
-            if (xPlayer <= (xWindow + wWindow) && (xPlayer + wPlayer) >= xWindow && yPlayer <= (yWindow + hWindow) && (yPlayer + hPlayer) >= yWindow && level == 2) {
+            if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xWindow, yWindow, wWindow, hWindow) && level == 2) {
                 if (clip.isOpen()) clip.close();
                 score += 10;
 
@@ -594,7 +592,7 @@ public class Main extends JComponent {
                 level = 3;
             }
 
-            if (xPlayer <= (xMan + wMan) && (xPlayer + wPlayer) >= xMan && yPlayer <= (yMan + hMan) && (yPlayer + hPlayer) >= yMan && level == 3) {
+            if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xMan, yMan, wMan, hMan) && level == 3) {
                 if (clip.isOpen()) clip.close();
                 score += 10;
 
@@ -612,7 +610,7 @@ public class Main extends JComponent {
                 level = 4;
             }
 
-            if (xPlayer <= (xFood + wFood) && (xPlayer + wPlayer) >= xFood && yPlayer <= (yFood + hFood) && (yPlayer + hPlayer) >= yFood && level == 2) {
+            if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xFood, yFood, wFood, hFood) && level == 2) {
                 score += 5;
                 foodSpawned = false;
 
@@ -630,7 +628,7 @@ public class Main extends JComponent {
                 }
             }
 
-            if (xPlayer <= (xDove + wDove) && (xPlayer + wPlayer) >= xDove && yPlayer <= (yDove + hDove) && (yPlayer + hPlayer) >= yDove) {
+            if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xDove, yDove, wDove, hDove)) {
                 xDove = -999;
                 yDove = -999;
 
@@ -649,7 +647,7 @@ public class Main extends JComponent {
                 level = 1;
             }
 
-            if (xPlayer <= (xPige + wPige) && (xPlayer + wPlayer) >= xPige && yPlayer <= (yPige + hPige) && (yPlayer + hPlayer) >= yPige && level == 1) {
+            if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xPige, yPige, wPige, hPige) && level == 1) {
                 jumpscare(frame);
             }
 
