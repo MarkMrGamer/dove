@@ -188,7 +188,11 @@ public class Main extends JComponent {
     public static boolean preloading = true;
     public static int damageRoll = 0;
     public static boolean playerTurn = true;
-    public static boolean enemyTurn = false;
+    public static boolean playerAttack = true;
+    public static boolean enemyAttack = true;
+    public static boolean damageView = false;
+    public static int dmgViewX = 0;
+    public static int dmgViewY = 0;
     public static String dialogueMessage = "What will you do?";
     public static int battleSelect = 0;
     public static int cheatLevel = 0;
@@ -276,7 +280,12 @@ public class Main extends JComponent {
 
             if (playerTurn) {
                 if (battleSelect == 0) g.drawString("> Fight", 24, 276); else g.drawString("Fight", 24, 276);
-                if (battleSelect == 1) g.drawString("> Run", 24, 291); else g.drawString("Run", 24, 291);
+                if (battleSelect == 1) g.drawString("> Claw", 24, 291); else g.drawString("Claw", 24, 291);
+            }
+
+            if (damageView) {
+                g.setColor(Color.red);
+                g.drawString("-" + damageRoll, dmgViewX, dmgViewY);
             }
         }
 
@@ -316,32 +325,38 @@ public class Main extends JComponent {
     static class KBListener extends KeyAdapter {
 
         public void keyPressed(KeyEvent e) {
-            if (flappy || inBattle) return;
+            if (flappy) return;
 
             System.out.println("Key pressed");
 
-            if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+            if (e.getKeyCode() == KeyEvent.VK_LEFT && !inBattle) {
                 held = true;
                 direction = "left";
             }
 
-            if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+            if (e.getKeyCode() == KeyEvent.VK_RIGHT && !inBattle) {
                 held = true;
                 direction = "right";
             }
 
-            if (e.getKeyCode() == KeyEvent.VK_UP) {
+            if (e.getKeyCode() == KeyEvent.VK_UP && !inBattle) {
                 held = true;
                 direction = "up";
-
-                if (inBattle) battleSelect += 1;
+            } else if (e.getKeyCode() == KeyEvent.VK_UP && inBattle && playerTurn) {
+                battleSelect -= 1;
             }
 
-            if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            if (e.getKeyCode() == KeyEvent.VK_DOWN && !inBattle) {
                 held = true;
                 direction = "down";
+            } else if (e.getKeyCode() == KeyEvent.VK_DOWN && inBattle && playerTurn) {
+                battleSelect += 1;
+            }
 
-                if (inBattle) battleSelect -= 1;
+            if (e.getKeyCode() == KeyEvent.VK_ENTER && inBattle && playerTurn) {
+                playerTurn = false;
+
+                if (battleSelect == 0) playerAttack = true;
             }
 
             if (e.getKeyCode() == KeyEvent.VK_F && !preloading) {
@@ -689,6 +704,105 @@ public class Main extends JComponent {
 
             if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xPige, yPige, wPige, hPige) && level == 1) {
                 jumpscare(frame);
+            }
+
+            if (damageView) {
+                for (int g = 0;g < 20;g++) {
+                    dmgViewY -= 1;
+                    Thread.sleep(10);
+                }
+
+                dmgViewX = 0;
+                dmgViewY = 0;
+                damageView = false;
+            }
+
+            if (playerAttack) {
+                dialogueMessage = "You pecked";
+
+                for (int i = 0;i < 23;i++) {
+                    xPlayer += i;
+                    Thread.sleep(10);
+                }
+
+                for (int i = 0;i < 8;i++) {
+                    xPlayer += 2;
+                    xMan += i;
+                    Thread.sleep(10);
+                }
+
+                for (int i = 0;i < 8;i++) {
+                    xPlayer -= 2;
+                    xMan -= i;
+                    Thread.sleep(10);
+                }
+
+
+                damageRoll = (int)(Math.random() * 20 + 0);
+
+                if (damageRoll >= 10) {
+                    manHP -= damageRoll;
+                    dialogueMessage = "Man has been pecked for " + damageRoll + " damage";
+                    damageView = true;
+                    dmgViewX = xMan;
+                    dmgViewY = yMan;
+                } else {
+                    dialogueMessage = "Whoops missed!";
+                }
+
+                for (int i = 0;i < 23;i++) {
+                    xPlayer -= i;
+                    Thread.sleep(10);
+                }
+
+                Thread.sleep(1000);
+
+                enemyAttack = true;
+                playerAttack = false;
+            }
+
+            if (enemyAttack) {
+                dialogueMessage = "The golden running man hits";
+
+                for (int i = 0;i < 23;i++) {
+                    xMan -= i;
+                    Thread.sleep(10);
+                }
+
+                for (int i = 0;i < 8;i++) {
+                    xMan -= 2;
+                    xPlayer -= i;
+                    Thread.sleep(10);
+                }
+
+                for (int i = 0;i < 8;i++) {
+                    xMan += 2;
+                    xPlayer += i;
+                    Thread.sleep(10);
+                }
+
+                damageRoll = (int)(Math.random() * 20 + 0);
+
+                if (damageRoll >= 10) {
+                    playerHP -= damageRoll;
+                    dialogueMessage = "You has been hit for " + damageRoll + " damage";
+                    damageView = true;
+                    dmgViewX = xPlayer;
+                    dmgViewY = yPlayer;
+                } else {
+                    dialogueMessage = "Whoops missed!";
+                }
+
+                for (int i = 0;i < 23;i++) {
+                    xMan += i;
+                    Thread.sleep(10);
+                }
+
+                Thread.sleep(1000);
+
+                dialogueMessage = "What will you do?";
+                playerTurn = true;
+                enemyAttack = false;
             }
 
             frame.repaint();
