@@ -188,9 +188,11 @@ public class Main extends JComponent {
     public static boolean preloading = true;
     public static int damageRoll = 0;
     public static boolean playerTurn = true;
-    public static boolean playerAttack = true;
-    public static boolean enemyAttack = true;
+    public static boolean playerAttack = false;
+    public static boolean enemyAttack = false;
     public static boolean damageView = false;
+    public static int dmgTime = 0;
+    public static boolean gaugeDamage = false;
     public static int dmgViewX = 0;
     public static int dmgViewY = 0;
     public static String dialogueMessage = "What will you do?";
@@ -283,6 +285,10 @@ public class Main extends JComponent {
                 if (battleSelect == 1) g.drawString("> Claw", 24, 291); else g.drawString("Claw", 24, 291);
             }
 
+            if (gaugeDamage) {
+                g.drawString("Damage: " + dmgTime, 24, 246);
+            }
+
             if (damageView) {
                 g.setColor(Color.red);
                 g.drawString("-" + damageRoll, dmgViewX, dmgViewY);
@@ -353,10 +359,19 @@ public class Main extends JComponent {
                 battleSelect += 1;
             }
 
-            if (e.getKeyCode() == KeyEvent.VK_ENTER && inBattle && playerTurn) {
-                playerTurn = false;
+            if (e.getKeyCode() == KeyEvent.VK_ENTER && inBattle) {
+                if (battleSelect == 0 && playerTurn)  {
+                    playerTurn = false;
+                    gaugeDamage = true;
+                    return;
+                }
 
-                if (battleSelect == 0) playerAttack = true;
+                if (gaugeDamage && dmgTime < 41) {
+                    dmgTime = 0;
+                    gaugeDamage = false;
+                    playerAttack = true;
+                    return;
+                }
             }
 
             if (e.getKeyCode() == KeyEvent.VK_F && !preloading) {
@@ -405,7 +420,11 @@ public class Main extends JComponent {
     }
 
     public static void gameOver(JFrame frame) throws LineUnavailableException, IOException, InterruptedException, UnsupportedAudioFileException, MidiUnavailableException, InvalidMidiDataException {
+        inBattle = false;
         flappy = false;
+        playerTurn = false;
+        playerAttack = false;
+        enemyAttack = false;
         windowCount = 0;
         foodSpawned = false;
         xTree1 = 600;
@@ -439,6 +458,7 @@ public class Main extends JComponent {
 
         xPlayer = 400;
         yPlayer = 250;
+        playerHP = 100;
 
         xDove = 100;
         yDove = 200;
@@ -491,6 +511,157 @@ public class Main extends JComponent {
         sequencer.start();
 
         while (!preloading) {
+            if (inBattle) {
+                if (gaugeDamage && dmgTime <= 20) {
+                    dmgTime += 1;
+                    damageRoll += 1;
+                } else if (gaugeDamage && dmgTime <= 40) {
+                    dmgTime += 1;
+                    damageRoll -= 1;
+                } else if (gaugeDamage) {
+                    dmgTime = 0;
+                    damageRoll = 0;
+                    gaugeDamage = false;
+                    playerAttack = true;
+                }
+
+                if (playerAttack) {
+                    dialogueMessage = "You pecked";
+
+                    for (int i = 0; i < 23; i++) {
+                        xPlayer += i;
+                        Thread.sleep(10);
+                    }
+
+                    for (int i = 0; i < 8; i++) {
+                        xPlayer += 2;
+                        xMan += i;
+                        Thread.sleep(10);
+                    }
+
+                    for (int i = 0; i < 8; i++) {
+                        xPlayer -= 2;
+                        xMan -= i;
+                        Thread.sleep(10);
+                    }
+
+                    if (damageRoll >= 10) {
+                        dialogueMessage = "Man has been pecked for " + damageRoll + " damage";
+                        damageView = true;
+
+                        dmgViewX = xMan;
+                        dmgViewY = yMan;
+
+                        for (int g = 0;g < 25;g++) {
+                            dmgViewY -= 1;
+                            Thread.sleep(10);
+                        }
+
+                        for (int g = 0;g < damageRoll;g++) {
+                            manHP -= 1;
+                            Thread.sleep(10);
+                        }
+
+                        dmgViewX = 0;
+                        dmgViewY = 0;
+                        damageView = false;
+                    } else {
+                        dialogueMessage = "Whoops missed!";
+                    }
+
+                    for (int i = 0; i < 23; i++) {
+                        xPlayer -= i;
+                        Thread.sleep(10);
+                    }
+
+                    if (manHP < 0) {
+                        playerTurn = false;
+                        playerAttack = false;
+                        enemyAttack = false;
+
+                        xMan = 999;
+                        yMan = 999;
+
+                        dialogueMessage = "Golden running man dies. You win.";
+
+                        Thread.sleep(1000);
+
+                        sequencer.stop();
+                        inBattle = false;
+                        level = 5;
+                    }
+
+                    Thread.sleep(1000);
+
+                    enemyAttack = true;
+                    playerAttack = false;
+                }
+
+                if (enemyAttack) {
+                    dialogueMessage = "The golden running man hits";
+
+                    for (int i = 0; i < 23; i++) {
+                        xMan -= i;
+                        Thread.sleep(10);
+                    }
+
+                    for (int i = 0; i < 8; i++) {
+                        xMan -= 2;
+                        xPlayer -= i;
+                        Thread.sleep(10);
+                    }
+
+                    for (int i = 0; i < 8; i++) {
+                        xMan += 2;
+                        xPlayer += i;
+                        Thread.sleep(10);
+                    }
+
+                    damageRoll = (int) (Math.random() * 20 + 0);
+
+                    if (damageRoll >= 10) {
+                        dialogueMessage = "You have been hit for " + damageRoll + " damage";
+                        damageView = true;
+
+                        dmgViewX = xPlayer;
+                        dmgViewY = yPlayer;
+
+                        for (int g = 0;g < 25;g++) {
+                            dmgViewY -= 1;
+                            Thread.sleep(10);
+                        }
+
+                        for (int g = 0;g < damageRoll;g++) {
+                            playerHP -= 1;
+                            Thread.sleep(10);
+                        }
+
+                        dmgViewX = 0;
+                        dmgViewY = 0;
+                        damageView = false;
+                    } else {
+                        dialogueMessage = "Whoops missed!";
+                    }
+
+                    for (int i = 0; i < 23; i++) {
+                        xMan += i;
+                        Thread.sleep(10);
+                    }
+
+                    if (playerHP < 0) {
+                        enemyAttack = false;
+                        sequencer.stop();
+                        gameOver(frame);
+                    }
+
+                    Thread.sleep(1000);
+
+                    dialogueMessage = "What will you do?";
+                    playerTurn = true;
+                    enemyAttack = false;
+                }
+            }
+
             if (flappy) {
                 if (yPlayer > 420) {
                     if (clip.isOpen()) clip.close();
@@ -648,7 +819,8 @@ public class Main extends JComponent {
                 sequencer.stop();
 
                 xPlayer = 144;
-                yPlayer = 369;                sequencer.setSequence(doveMus7);
+                yPlayer = 369;
+                sequencer.setSequence(doveMus7);
                 sequencer.start();
 
 
@@ -657,6 +829,7 @@ public class Main extends JComponent {
 
                 held = false;
                 inBattle = true;
+                playerTurn = true;
                 cheatLevel = -1;
                 level = 4;
             }
@@ -704,105 +877,6 @@ public class Main extends JComponent {
 
             if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xPige, yPige, wPige, hPige) && level == 1) {
                 jumpscare(frame);
-            }
-
-            if (damageView) {
-                for (int g = 0;g < 20;g++) {
-                    dmgViewY -= 1;
-                    Thread.sleep(10);
-                }
-
-                dmgViewX = 0;
-                dmgViewY = 0;
-                damageView = false;
-            }
-
-            if (playerAttack) {
-                dialogueMessage = "You pecked";
-
-                for (int i = 0;i < 23;i++) {
-                    xPlayer += i;
-                    Thread.sleep(10);
-                }
-
-                for (int i = 0;i < 8;i++) {
-                    xPlayer += 2;
-                    xMan += i;
-                    Thread.sleep(10);
-                }
-
-                for (int i = 0;i < 8;i++) {
-                    xPlayer -= 2;
-                    xMan -= i;
-                    Thread.sleep(10);
-                }
-
-
-                damageRoll = (int)(Math.random() * 20 + 0);
-
-                if (damageRoll >= 10) {
-                    manHP -= damageRoll;
-                    dialogueMessage = "Man has been pecked for " + damageRoll + " damage";
-                    damageView = true;
-                    dmgViewX = xMan;
-                    dmgViewY = yMan;
-                } else {
-                    dialogueMessage = "Whoops missed!";
-                }
-
-                for (int i = 0;i < 23;i++) {
-                    xPlayer -= i;
-                    Thread.sleep(10);
-                }
-
-                Thread.sleep(1000);
-
-                enemyAttack = true;
-                playerAttack = false;
-            }
-
-            if (enemyAttack) {
-                dialogueMessage = "The golden running man hits";
-
-                for (int i = 0;i < 23;i++) {
-                    xMan -= i;
-                    Thread.sleep(10);
-                }
-
-                for (int i = 0;i < 8;i++) {
-                    xMan -= 2;
-                    xPlayer -= i;
-                    Thread.sleep(10);
-                }
-
-                for (int i = 0;i < 8;i++) {
-                    xMan += 2;
-                    xPlayer += i;
-                    Thread.sleep(10);
-                }
-
-                damageRoll = (int)(Math.random() * 20 + 0);
-
-                if (damageRoll >= 10) {
-                    playerHP -= damageRoll;
-                    dialogueMessage = "You has been hit for " + damageRoll + " damage";
-                    damageView = true;
-                    dmgViewX = xPlayer;
-                    dmgViewY = yPlayer;
-                } else {
-                    dialogueMessage = "Whoops missed!";
-                }
-
-                for (int i = 0;i < 23;i++) {
-                    xMan += i;
-                    Thread.sleep(10);
-                }
-
-                Thread.sleep(1000);
-
-                dialogueMessage = "What will you do?";
-                playerTurn = true;
-                enemyAttack = false;
             }
 
             frame.repaint();
