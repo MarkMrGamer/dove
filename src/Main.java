@@ -92,6 +92,8 @@ public class Main extends JComponent {
     public BufferedImage roomBg2 = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/room2.png")));
     public BufferedImage jumpscareBg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/bjumpscar.png")));
     public BufferedImage deadBg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/dovedown.png")));
+    public BufferedImage gaugeImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/gauge.png")));
+    public BufferedImage sliderImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/slider.png")));
     public Image mrunImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("resources/images/manrun.gif"))).getImage();
 
     // sounds
@@ -103,6 +105,10 @@ public class Main extends JComponent {
     public static AudioInputStream crashSnd;
     public static AudioInputStream breakSnd;
     public static AudioInputStream gobbleSnd;
+    public static AudioInputStream hit1Snd;
+    public static AudioInputStream hit2Snd;
+    public static AudioInputStream hit3Snd;
+    public static AudioInputStream deadSnd;
 
     // music
 
@@ -282,11 +288,12 @@ public class Main extends JComponent {
 
             if (playerTurn) {
                 if (battleSelect == 0) g.drawString("> Fight", 24, 276); else g.drawString("Fight", 24, 276);
-                if (battleSelect == 1) g.drawString("> Claw", 24, 291); else g.drawString("Claw", 24, 291);
+                if (battleSelect == 1) g.drawString("> Eat", 24, 291); else g.drawString("Eat", 24, 291);
             }
 
             if (gaugeDamage) {
-                g.drawString("Damage: " + dmgTime, 24, 246);
+                g.drawImage(gaugeImg, 100, 100, null);
+                g.drawImage(sliderImg, 90 + dmgTime, 100, null);
             }
 
             if (damageView) {
@@ -416,6 +423,10 @@ public class Main extends JComponent {
         crashSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/crash.wav"))));
         breakSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/glassbreak.wav"))));
         gobbleSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/gobble.wav"))));
+        hit1Snd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/hit1.wav"))));
+        hit2Snd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/hit2.wav"))));
+        hit3Snd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/hit3.wav"))));
+        deadSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/dead.wav"))));
         clip = AudioSystem.getClip();
     }
 
@@ -495,6 +506,56 @@ public class Main extends JComponent {
     public static boolean coil(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2) {
         return x1 <= (x2 + w2) && (x1 + w1) >= x2 && y1 <= (y2 + h2) && (y1 + h1) >= y2;
     }
+
+    public static void playHitSnd() throws LineUnavailableException, IOException {
+        int randHitSnd = (int) (Math.random() * 3 + 1);
+
+        switch (randHitSnd) {
+            case 1 -> {
+                if (!clip.isOpen()) {
+                    clip.open(hit1Snd);
+                    clip.setFramePosition(0);
+                    clip.start();
+                } else if (clip.isRunning()) {
+                    clip.stop();
+                    clip.setFramePosition(0);
+                    clip.start();
+                } else {
+                    clip.setFramePosition(0);
+                    clip.start();
+                }
+            }
+            case 2 -> {
+                if (!clip.isOpen()) {
+                    clip.open(hit2Snd);
+                    clip.setFramePosition(0);
+                    clip.start();
+                } else if (clip.isRunning()) {
+                    clip.stop();
+                    clip.setFramePosition(0);
+                    clip.start();
+                } else {
+                    clip.setFramePosition(0);
+                    clip.start();
+                }
+            }
+            case 3 -> {
+                if (!clip.isOpen()) {
+                    clip.open(hit3Snd);
+                    clip.setFramePosition(0);
+                    clip.start();
+                } else if (clip.isRunning()) {
+                    clip.stop();
+                    clip.setFramePosition(0);
+                    clip.start();
+                } else {
+                    clip.setFramePosition(0);
+                    clip.start();
+                }
+            }
+        }
+    }
+
     public static void main(String[] args) throws IOException, MidiUnavailableException, InvalidMidiDataException, LineUnavailableException, UnsupportedAudioFileException, InterruptedException {
         JFrame frame = new GameFrame();
         soundEffects();
@@ -512,11 +573,11 @@ public class Main extends JComponent {
 
         while (!preloading) {
             if (inBattle) {
-                if (gaugeDamage && dmgTime <= 20) {
-                    dmgTime += 1;
+                if (gaugeDamage && dmgTime <= 260) {
+                    dmgTime += 4;
                     damageRoll += 1;
-                } else if (gaugeDamage && dmgTime <= 40) {
-                    dmgTime += 1;
+                } else if (gaugeDamage && dmgTime <= 280) {
+                    dmgTime += 4;
                     damageRoll -= 1;
                 } else if (gaugeDamage) {
                     dmgTime = 0;
@@ -546,6 +607,15 @@ public class Main extends JComponent {
                     }
 
                     if (damageRoll >= 10) {
+                        if (damageRoll < manHP) {
+                            playHitSnd();
+                        } else {
+                            clip.close();
+                            clip.open(deadSnd);
+                            clip.setFramePosition(0);
+                            clip.start();
+                        }
+
                         dialogueMessage = "Man has been pecked for " + damageRoll + " damage";
                         damageView = true;
 
@@ -574,7 +644,7 @@ public class Main extends JComponent {
                         Thread.sleep(10);
                     }
 
-                    if (manHP < 0) {
+                    if (manHP <= 0) {
                         playerTurn = false;
                         playerAttack = false;
                         enemyAttack = false;
@@ -587,6 +657,7 @@ public class Main extends JComponent {
                         Thread.sleep(1000);
 
                         sequencer.stop();
+                        clip.close();
                         inBattle = false;
                         level = 5;
                     }
@@ -620,6 +691,15 @@ public class Main extends JComponent {
                     damageRoll = (int) (Math.random() * 20 + 0);
 
                     if (damageRoll >= 10) {
+                        if (damageRoll < playerHP) {
+                            playHitSnd();
+                        } else {
+                            clip.close();
+                            clip.open(deadSnd);
+                            clip.setFramePosition(0);
+                            clip.start();
+                        }
+
                         dialogueMessage = "You have been hit for " + damageRoll + " damage";
                         damageView = true;
 
@@ -648,9 +728,10 @@ public class Main extends JComponent {
                         Thread.sleep(10);
                     }
 
-                    if (playerHP < 0) {
+                    if (playerHP <= 0) {
                         enemyAttack = false;
                         sequencer.stop();
+                        clip.close();
                         gameOver(frame);
                     }
 
