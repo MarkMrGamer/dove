@@ -192,7 +192,7 @@ public class Main extends JComponent {
     public static boolean showScore;
     public static boolean dead;
     public static boolean preloading = true;
-    public static int damageRoll = 0;
+    public static double damageRoll = 0;
     public static boolean playerTurn = true;
     public static boolean playerAttack = false;
     public static boolean enemyAttack = false;
@@ -201,6 +201,7 @@ public class Main extends JComponent {
     public static boolean gaugeDamage = false;
     public static int dmgViewX = 0;
     public static int dmgViewY = 0;
+    public static int gaugeY = 0;
     public static String dialogueMessage = "What will you do?";
     public static int battleSelect = 0;
     public static int cheatLevel = 0;
@@ -291,8 +292,11 @@ public class Main extends JComponent {
                 if (battleSelect == 1) g.drawString("> Eat", 24, 291); else g.drawString("Eat", 24, 291);
             }
 
+            g.drawImage(gaugeImg, 100, 100,381, gaugeY, null);
+
             if (gaugeDamage) {
-                g.drawImage(gaugeImg, 100, 100, null);
+                g.drawString("" + (int)damageRoll, 100, 100);
+                g.drawString("" + dmgTime, 120, 100);
                 g.drawImage(sliderImg, 90 + dmgTime, 100, null);
             }
 
@@ -370,10 +374,11 @@ public class Main extends JComponent {
                 if (battleSelect == 0 && playerTurn)  {
                     playerTurn = false;
                     gaugeDamage = true;
+                    damageRoll = 0;
                     return;
                 }
 
-                if (gaugeDamage && dmgTime < 41) {
+                if (gaugeDamage && dmgTime < 401) {
                     dmgTime = 0;
                     gaugeDamage = false;
                     playerAttack = true;
@@ -573,12 +578,12 @@ public class Main extends JComponent {
 
         while (!preloading) {
             if (inBattle) {
-                if (gaugeDamage && dmgTime <= 260) {
-                    dmgTime += 4;
-                    damageRoll += 1;
-                } else if (gaugeDamage && dmgTime <= 280) {
-                    dmgTime += 4;
-                    damageRoll -= 1;
+                if (gaugeDamage && dmgTime <= 200) {
+                    dmgTime += 5;
+                    damageRoll += 0.5;
+                } else if (gaugeDamage && dmgTime <= 400) {
+                    dmgTime += 5;
+                    damageRoll -= 0.5;
                 } else if (gaugeDamage) {
                     dmgTime = 0;
                     damageRoll = 0;
@@ -586,7 +591,7 @@ public class Main extends JComponent {
                     playerAttack = true;
                 }
 
-                if (playerAttack) {
+                if (playerAttack && gaugeY < 0) {
                     dialogueMessage = "You pecked";
 
                     for (int i = 0; i < 23; i++) {
@@ -654,7 +659,7 @@ public class Main extends JComponent {
 
                         dialogueMessage = "Golden running man dies. You win.";
 
-                        Thread.sleep(1000);
+                        Thread.sleep(5000);
 
                         sequencer.stop();
                         clip.close();
@@ -958,6 +963,12 @@ public class Main extends JComponent {
 
             if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xPige, yPige, wPige, hPige) && level == 1) {
                 jumpscare(frame);
+            }
+
+            if (gaugeDamage && gaugeY < 70) {
+                gaugeY += 5;
+            } else if (!gaugeDamage && gaugeY > 0) {
+                gaugeY -= 5;
             }
 
             frame.repaint();
