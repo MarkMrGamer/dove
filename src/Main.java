@@ -105,9 +105,6 @@ public class Main extends JComponent {
     public static AudioInputStream crashSnd;
     public static AudioInputStream breakSnd;
     public static AudioInputStream gobbleSnd;
-    public static AudioInputStream hit1Snd;
-    public static AudioInputStream hit2Snd;
-    public static AudioInputStream hit3Snd;
     public static AudioInputStream deadSnd;
 
     // music
@@ -295,8 +292,6 @@ public class Main extends JComponent {
             g.drawImage(gaugeImg, 100, 100,381, gaugeY, null);
 
             if (gaugeDamage) {
-                g.drawString("" + (int)damageRoll, 100, 100);
-                g.drawString("" + dmgTime, 120, 100);
                 g.drawImage(sliderImg, 90 + dmgTime, 100, null);
             }
 
@@ -428,9 +423,6 @@ public class Main extends JComponent {
         crashSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/crash.wav"))));
         breakSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/glassbreak.wav"))));
         gobbleSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/gobble.wav"))));
-        hit1Snd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/hit1.wav"))));
-        hit2Snd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/hit2.wav"))));
-        hit3Snd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/hit3.wav"))));
         deadSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/dead.wav"))));
         clip = AudioSystem.getClip();
     }
@@ -512,51 +504,35 @@ public class Main extends JComponent {
         return x1 <= (x2 + w2) && (x1 + w1) >= x2 && y1 <= (y2 + h2) && (y1 + h1) >= y2;
     }
 
-    public static void playHitSnd() throws LineUnavailableException, IOException {
+    public static void playHitSnd() throws LineUnavailableException, IOException, UnsupportedAudioFileException {
         int randHitSnd = (int) (Math.random() * 3 + 1);
+
+        AudioInputStream hit1Snd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/hit1.wav"))));
+        AudioInputStream hit2Snd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/hit2.wav"))));
+        AudioInputStream hit3Snd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/hit3.wav"))));
+
+        System.out.println("randHitSnd = " + randHitSnd);
 
         switch (randHitSnd) {
             case 1 -> {
-                if (!clip.isOpen()) {
-                    clip.open(hit1Snd);
-                    clip.setFramePosition(0);
-                    clip.start();
-                } else if (clip.isRunning()) {
-                    clip.stop();
-                    clip.setFramePosition(0);
-                    clip.start();
-                } else {
-                    clip.setFramePosition(0);
-                    clip.start();
-                }
+                clip.close();
+                clip.open(hit1Snd);
+                clip.setFramePosition(0);
+                clip.start();
             }
+
             case 2 -> {
-                if (!clip.isOpen()) {
-                    clip.open(hit2Snd);
-                    clip.setFramePosition(0);
-                    clip.start();
-                } else if (clip.isRunning()) {
-                    clip.stop();
-                    clip.setFramePosition(0);
-                    clip.start();
-                } else {
-                    clip.setFramePosition(0);
-                    clip.start();
-                }
+                clip.close();
+                clip.open(hit2Snd);
+                clip.setFramePosition(0);
+                clip.start();
             }
+
             case 3 -> {
-                if (!clip.isOpen()) {
-                    clip.open(hit3Snd);
-                    clip.setFramePosition(0);
-                    clip.start();
-                } else if (clip.isRunning()) {
-                    clip.stop();
-                    clip.setFramePosition(0);
-                    clip.start();
-                } else {
-                    clip.setFramePosition(0);
-                    clip.start();
-                }
+                clip.close();
+                clip.open(hit3Snd);
+                clip.setFramePosition(0);
+                clip.start();
             }
         }
     }
@@ -591,7 +567,7 @@ public class Main extends JComponent {
                     playerAttack = true;
                 }
 
-                if (playerAttack && gaugeY < 0) {
+                if (playerAttack && gaugeY <= 0) {
                     dialogueMessage = "You pecked";
 
                     for (int i = 0; i < 23; i++) {
@@ -659,7 +635,7 @@ public class Main extends JComponent {
 
                         dialogueMessage = "Golden running man dies. You win.";
 
-                        Thread.sleep(5000);
+                        Thread.sleep(2000);
 
                         sequencer.stop();
                         clip.close();
