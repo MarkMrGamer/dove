@@ -76,6 +76,11 @@ public class Main extends JComponent {
     public static int wMan = 95;
     public static int hMan = 120;
 
+    // magic
+    public static int xMagic = 999;
+    public static int yMagic = 999;
+    public static int wMagic = 32;
+    public static int hMagic = 32;
 
     // sprites
     public BufferedImage charImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/bird.png")));
@@ -94,6 +99,7 @@ public class Main extends JComponent {
     public BufferedImage deadBg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/dovedown.png")));
     public BufferedImage gaugeImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/gauge.png")));
     public BufferedImage sliderImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/slider.png")));
+    public BufferedImage mailImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/mail.jpg")));
     public Image mrunImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("resources/images/manrun.gif"))).getImage();
 
     // sounds
@@ -286,10 +292,11 @@ public class Main extends JComponent {
 
             if (playerTurn) {
                 if (battleSelect == 0) g.drawString("> Fight", 24, 276); else g.drawString("Fight", 24, 276);
-                if (battleSelect == 1) g.drawString("> Eat", 24, 291); else g.drawString("Eat", 24, 291);
+                if (battleSelect == 1) g.drawString("> Magic", 24, 291); else g.drawString("Magic", 24, 291);
             }
 
             g.drawImage(gaugeImg, 100, 100,381, gaugeY, null);
+            g.drawImage(mailImg, xMagic, yMagic, wMagic, hMagic, null);
 
             if (gaugeDamage) {
                 g.drawImage(sliderImg, 90 + dmgTime, 100, null);
@@ -370,6 +377,12 @@ public class Main extends JComponent {
                     playerTurn = false;
                     gaugeDamage = true;
                     damageRoll = 0;
+                    return;
+                }
+
+                if (battleSelect == 1 && playerTurn)  {
+                    playerTurn = false;
+                    playerAttack = true;
                     return;
                 }
 
@@ -567,7 +580,120 @@ public class Main extends JComponent {
                     playerAttack = true;
                 }
 
-                if (playerAttack && gaugeY <= 0) {
+                if (playerAttack && battleSelect == 1) {
+                    dialogueMessage = "You tried magic";
+
+                    AudioInputStream woohSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/wooh.wav"))));
+                    AudioInputStream fartSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/fart.wav"))));
+                    AudioInputStream beepSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/beep.wav"))));
+
+                    clip.close();
+                    clip.open(woohSnd);
+                    clip.start();
+
+                    xMagic = xPlayer;
+                    yMagic = yPlayer;
+
+                    for (int i = 0; i < 23; i++) {
+                        xMagic += i;
+                        Thread.sleep(10);
+                    }
+
+                    damageRoll = (int) (Math.random() * 30 + 0);
+
+                    if (damageRoll >= 10) {
+                        clip.close();
+                        clip.open(beepSnd);
+                        clip.start();
+
+                        dialogueMessage = "Man has been hit with mail for " + damageRoll + " damage";
+                        damageView = true;
+
+                        dmgViewX = xMan;
+                        dmgViewY = yMan;
+
+                        for (int i = 0; i < 8; i++) {
+                            wMagic += i;
+                            hMagic += i;
+                            xMan += i;
+                            Thread.sleep(10);
+                        }
+
+                        for (int i = 0; i < 8; i++) {
+                            wMagic += i;
+                            hMagic += i;
+                            xMan -= i;
+                            Thread.sleep(10);
+                        }
+
+                        for (int i = 0; i < 8; i++) {
+                            wMagic += i;
+                            hMagic += i;
+                            Thread.sleep(10);
+                        }
+
+                        wMagic = 32;
+                        hMagic = 32;
+                        xMagic = 999;
+                        yMagic = 999;
+
+                        for (int g = 0; g < 25; g++) {
+                            dmgViewY -= 1;
+                            Thread.sleep(10);
+                        }
+
+                        for (int g = 0; g < damageRoll; g++) {
+                            manHP -= 1;
+                            Thread.sleep(10);
+                        }
+
+                        dmgViewX = 0;
+                        dmgViewY = 0;
+                        damageView = false;
+                    } else {
+                        clip.close();
+                        clip.open(fartSnd);
+                        clip.start();
+
+                        for (int i = 0; i < 25; i++) {
+                            wMagic += i;
+                            hMagic += i;
+                            Thread.sleep(10);
+                        }
+
+                        wMagic = 32;
+                        hMagic = 32;
+                        xMagic = 999;
+                        yMagic = 999;
+
+                        dialogueMessage = "That doesn't seem to affect Man that much.";
+                    }
+
+                    if (manHP <= 0) {
+                        playerTurn = false;
+                        playerAttack = false;
+                        enemyAttack = false;
+
+                        xMan = 999;
+                        yMan = 999;
+
+                        dialogueMessage = "Golden running man dies. You win.";
+
+                        Thread.sleep(1000);
+
+                        sequencer.stop();
+                        clip.close();
+                        inBattle = false;
+                        level = 5;
+                    }
+
+                    Thread.sleep(2000);
+
+                    enemyAttack = true;
+                    playerAttack = false;
+                }
+
+                if (playerAttack && gaugeY <= 0 && battleSelect == 0) {
                     dialogueMessage = "You pecked";
 
                     for (int i = 0; i < 23; i++) {
