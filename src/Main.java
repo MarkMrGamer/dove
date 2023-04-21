@@ -14,7 +14,7 @@ import java.util.Objects;
 
 public class Main extends JComponent {
     // Westerbur doesn't know my programming skills on Java is terrible
-    // TODO: create a turn-based battle system in level 3
+    // TODO: make the ending to level 3 and advance to level 4
 
     // main character
     public static int xPlayer = 300;
@@ -112,6 +112,7 @@ public class Main extends JComponent {
     public static AudioInputStream breakSnd;
     public static AudioInputStream gobbleSnd;
     public static AudioInputStream deadSnd;
+    public static AudioInputStream goodbyeSnd;
 
     // music
 
@@ -217,6 +218,8 @@ public class Main extends JComponent {
     public void paint(Graphics g) {
         super.paint(g);
 
+        Graphics2D g2d = (Graphics2D) g.create();
+
         if (preloading) {
             g.setColor(Color.black);
             g.drawString("preloading..", 400, 400);
@@ -242,6 +245,11 @@ public class Main extends JComponent {
 
             g.drawImage(doveImg, xDove, yDove, wDove, hDove, this);
             g.drawImage(charImg, xPlayer, yPlayer, wPlayer, hPlayer, this);
+
+            g2d.setColor(Color.RED);
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+            g2d.fillRect(50, 50, 100, 100);
+            g2d.dispose();
         }
 
         if (level == 1 && !dead) {
@@ -372,7 +380,7 @@ public class Main extends JComponent {
                 battleSelect += 1;
             }
 
-            if (e.getKeyCode() == KeyEvent.VK_ENTER && inBattle) {
+            if (e.getKeyCode() == KeyEvent.VK_ENTER && inBattle || e.getKeyCode() == KeyEvent.VK_X && inBattle) {
                 if (battleSelect == 0 && playerTurn)  {
                     playerTurn = false;
                     gaugeDamage = true;
@@ -437,6 +445,7 @@ public class Main extends JComponent {
         breakSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/glassbreak.wav"))));
         gobbleSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/gobble.wav"))));
         deadSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/dead.wav"))));
+        goodbyeSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/goodbye.wav"))));
         clip = AudioSystem.getClip();
     }
 
@@ -613,6 +622,8 @@ public class Main extends JComponent {
                         dmgViewY = yMan;
 
                         for (int i = 0; i < 8; i++) {
+                            xMagic += 1;
+                            yMagic -= 1;
                             wMagic += i;
                             hMagic += i;
                             xMan += i;
@@ -620,6 +631,8 @@ public class Main extends JComponent {
                         }
 
                         for (int i = 0; i < 8; i++) {
+                            xMagic += 1;
+                            yMagic -= 1;
                             wMagic += i;
                             hMagic += i;
                             xMan -= i;
@@ -627,6 +640,8 @@ public class Main extends JComponent {
                         }
 
                         for (int i = 0; i < 8; i++) {
+                            xMagic += 1;
+                            yMagic -= 1;
                             wMagic += i;
                             hMagic += i;
                             Thread.sleep(10);
@@ -655,7 +670,9 @@ public class Main extends JComponent {
                         clip.open(fartSnd);
                         clip.start();
 
-                        for (int i = 0; i < 25; i++) {
+                        for (int i = 0; i < 16; i++) {
+                            xMagic += 1;
+                            yMagic -= 1;
                             wMagic += i;
                             hMagic += i;
                             Thread.sleep(10);
@@ -674,10 +691,18 @@ public class Main extends JComponent {
                         playerAttack = false;
                         enemyAttack = false;
 
-                        xMan = 999;
-                        yMan = 999;
-
                         dialogueMessage = "Golden running man dies. You win.";
+
+                        Thread.sleep(clip.getMicrosecondLength() / 1000);
+
+                        clip.close();
+                        clip.open(goodbyeSnd);
+                        clip.start();
+
+                        for (int i = 0; i < 23; i++) {
+                            yMan += i;
+                            Thread.sleep(10);
+                        }
 
                         Thread.sleep(1000);
 
@@ -685,12 +710,12 @@ public class Main extends JComponent {
                         clip.close();
                         inBattle = false;
                         level = 5;
+                    } else {
+                        Thread.sleep(2000);
+
+                        enemyAttack = true;
+                        playerAttack = false;
                     }
-
-                    Thread.sleep(2000);
-
-                    enemyAttack = true;
-                    playerAttack = false;
                 }
 
                 if (playerAttack && gaugeY <= 0 && battleSelect == 0) {
@@ -756,10 +781,19 @@ public class Main extends JComponent {
                         playerAttack = false;
                         enemyAttack = false;
 
-                        xMan = 999;
-                        yMan = 999;
-
                         dialogueMessage = "Golden running man dies. You win.";
+
+                        Thread.sleep(clip.getMicrosecondLength() / 1000);
+
+                        clip.close();
+                        clip.open(goodbyeSnd);
+                        clip.setFramePosition(0);
+                        clip.start();
+
+                        for (int i = 0; i < 23; i++) {
+                            yMan += i;
+                            Thread.sleep(10);
+                        }
 
                         Thread.sleep(2000);
 
@@ -767,12 +801,12 @@ public class Main extends JComponent {
                         clip.close();
                         inBattle = false;
                         level = 5;
+                    } else {
+                        Thread.sleep(1000);
+
+                        enemyAttack = true;
+                        playerAttack = false;
                     }
-
-                    Thread.sleep(1000);
-
-                    enemyAttack = true;
-                    playerAttack = false;
                 }
 
                 if (enemyAttack) {
@@ -840,13 +874,13 @@ public class Main extends JComponent {
                         sequencer.stop();
                         clip.close();
                         gameOver(frame);
+                    } else {
+                        Thread.sleep(1000);
+
+                        dialogueMessage = "What will you do?";
+                        playerTurn = true;
+                        enemyAttack = false;
                     }
-
-                    Thread.sleep(1000);
-
-                    dialogueMessage = "What will you do?";
-                    playerTurn = true;
-                    enemyAttack = false;
                 }
             }
 
