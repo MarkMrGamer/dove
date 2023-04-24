@@ -82,6 +82,12 @@ public class Main extends JComponent {
     public static int wMagic = 32;
     public static int hMagic = 32;
 
+    // watergun
+    public static int xGun = 200;
+    public static int yGun = 200;
+    public static int wGun = 72;
+    public static int hGun = 45;
+
     // sprites
     public BufferedImage charImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/bird.png")));
     public BufferedImage doveImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/dove.gif")));
@@ -100,6 +106,9 @@ public class Main extends JComponent {
     public BufferedImage gaugeImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/gauge.png")));
     public BufferedImage sliderImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/slider.png")));
     public BufferedImage mailImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/mail.jpg")));
+    public BufferedImage mugManImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/mugman.png")));
+    public BufferedImage waterGImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/watergun.png")));
+    public BufferedImage bathBg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/bathroom.png")));
     public Image mrunImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("resources/images/manrun.gif"))).getImage();
 
     // sounds
@@ -113,6 +122,7 @@ public class Main extends JComponent {
     public static AudioInputStream gobbleSnd;
     public static AudioInputStream deadSnd;
     public static AudioInputStream goodbyeSnd;
+    public static AudioInputStream jackpotSnd;
 
     // music
 
@@ -186,6 +196,16 @@ public class Main extends JComponent {
         }
     }
 
+    public static Sequence doveMus8;
+
+    static {
+        try {
+            doveMus8 = MidiSystem.getSequence(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/music/houston.mid")));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     // stuff
     public static boolean held = false;
     public static String direction;
@@ -245,11 +265,6 @@ public class Main extends JComponent {
 
             g.drawImage(doveImg, xDove, yDove, wDove, hDove, this);
             g.drawImage(charImg, xPlayer, yPlayer, wPlayer, hPlayer, this);
-
-            g2d.setColor(Color.RED);
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
-            g2d.fillRect(50, 50, 100, 100);
-            g2d.dispose();
         }
 
         if (level == 1 && !dead) {
@@ -314,6 +329,12 @@ public class Main extends JComponent {
                 g.setColor(Color.red);
                 g.drawString("-" + damageRoll, dmgViewX, dmgViewY);
             }
+        }
+
+        if (level == 5 && !dead) {
+            g.drawImage(bathBg, 0, 0, null);
+            g.drawImage(waterGImg, xGun, yGun, wGun, hGun, this);
+            g.drawImage(charImg, xPlayer, yPlayer, wPlayer, hPlayer, this);
         }
 
         if (dead) {
@@ -412,19 +433,19 @@ public class Main extends JComponent {
 
             System.out.println("Key released");
 
-            if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+            if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_A) {
                 held = false;
             }
 
-            if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+            if (e.getKeyCode() == KeyEvent.VK_RIGHT || e.getKeyCode() == KeyEvent.VK_D) {
                 held = false;
             }
 
-            if (e.getKeyCode() == KeyEvent.VK_UP) {
+            if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_W) {
                 held = false;
             }
 
-            if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            if (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_S) {
                 held = false;
             }
         }
@@ -446,6 +467,7 @@ public class Main extends JComponent {
         gobbleSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/gobble.wav"))));
         deadSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/dead.wav"))));
         goodbyeSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/goodbye.wav"))));
+        jackpotSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/jackpot.wav"))));
         clip = AudioSystem.getClip();
     }
 
@@ -709,6 +731,12 @@ public class Main extends JComponent {
                         sequencer.stop();
                         clip.close();
                         inBattle = false;
+
+                        sequencer.setSequence(doveMus8);
+                        sequencer.start();
+                        JOptionPane.showMessageDialog(null, "level 5", "DOVE", JOptionPane.PLAIN_MESSAGE);
+                        xPlayer = 150;
+                        yPlayer = 150;
                         level = 5;
                     } else {
                         Thread.sleep(2000);
@@ -800,6 +828,12 @@ public class Main extends JComponent {
                         sequencer.stop();
                         clip.close();
                         inBattle = false;
+
+                        sequencer.setSequence(doveMus8);
+                        sequencer.start();
+                        JOptionPane.showMessageDialog(null, "level 5", "DOVE", JOptionPane.PLAIN_MESSAGE);
+                        xPlayer = 150;
+                        yPlayer = 150;
                         level = 5;
                     } else {
                         Thread.sleep(1000);
@@ -1078,7 +1112,7 @@ public class Main extends JComponent {
                 }
             }
 
-            if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xDove, yDove, wDove, hDove)) {
+            if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xDove, yDove, wDove, hDove) && level == 0) {
                 xDove = -999;
                 yDove = -999;
 
