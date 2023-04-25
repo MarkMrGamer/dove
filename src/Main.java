@@ -3,10 +3,8 @@ import javax.sound.midi.*;
 import javax.sound.sampled.*;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -87,6 +85,10 @@ public class Main extends JComponent {
     public static int yGun = 200;
     public static int wGun = 72;
     public static int hGun = 45;
+    public static boolean gEquipped = false;
+    public static boolean pew = false;
+    public static double angle;
+    public static Droplet drop = null;
 
     // sprites
     public BufferedImage charImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/bird.png")));
@@ -333,25 +335,63 @@ public class Main extends JComponent {
 
         if (level == 5 && !dead) {
             g.drawImage(bathBg, 0, 0, null);
-            g.drawImage(waterGImg, xGun, yGun, wGun, hGun, this);
             g.drawImage(charImg, xPlayer, yPlayer, wPlayer, hPlayer, this);
+            if (gEquipped) {
+                AffineTransform old = g2d.getTransform();
+                g2d.rotate(Math.toRadians(angle), xPlayer, yPlayer);
+                g2d.drawImage(waterGImg, xPlayer, yPlayer, wGun, hGun, this);
+                g2d.rotate(-Math.toRadians(angle), xPlayer, yPlayer);
+                g2d.setTransform(old);
+
+                if (drop != null) {
+                    g2d.rotate(Math.toRadians(drop.Angle), xPlayer, yPlayer);
+                    drop.xDrop += 1;
+                    g2d.fillRect(Objects.requireNonNull(drop).xDrop, drop.yDrop, 32, 32);
+                    g2d.setTransform(old);
+                }
+            } else {
+                g2d.drawImage(waterGImg, xGun, yGun, wGun, hGun, this);
+            }
         }
 
         if (dead) {
             g.drawImage(deadBg, 0, 0, null);
         }
     }
-    static class MListener implements MouseListener {
+    class MMListener implements MouseMotionListener {
+        @Override
+        public void mouseDragged(MouseEvent e) {
 
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent e) {
+            int mouseX = e.getX();
+            int mouseY = e.getY();
+
+            angle = Math.toDegrees(Math.atan2(mouseY - yPlayer, mouseX - xPlayer));
+            if (angle < 0) angle += 360;
+
+            repaint();
+        }
+    }
+
+    class MListener implements MouseListener {
         @Override
         public void mouseClicked(MouseEvent e) {
             System.out.println("Click");
-            flapVelo = 12;
+
+            if (flappy) {
+                flapVelo = 12;
+            }
+
+            if (gEquipped && !flappy && !pew) {
+                pew = true;
+            }
         }
 
         @Override
         public void mousePressed(MouseEvent e) {
-
         }
 
         @Override
@@ -361,7 +401,6 @@ public class Main extends JComponent {
 
         @Override
         public void mouseEntered(MouseEvent e) {
-
         }
 
         @Override
@@ -377,27 +416,27 @@ public class Main extends JComponent {
 
             System.out.println("Key pressed");
 
-            if (e.getKeyCode() == KeyEvent.VK_LEFT && !inBattle) {
+            if (e.getKeyCode() == KeyEvent.VK_LEFT && !inBattle || e.getKeyCode() == KeyEvent.VK_A && !inBattle) {
                 held = true;
                 direction = "left";
             }
 
-            if (e.getKeyCode() == KeyEvent.VK_RIGHT && !inBattle) {
+            if (e.getKeyCode() == KeyEvent.VK_RIGHT && !inBattle || e.getKeyCode() == KeyEvent.VK_D && !inBattle) {
                 held = true;
                 direction = "right";
             }
 
-            if (e.getKeyCode() == KeyEvent.VK_UP && !inBattle) {
+            if (e.getKeyCode() == KeyEvent.VK_UP && !inBattle || e.getKeyCode() == KeyEvent.VK_W && !inBattle) {
                 held = true;
                 direction = "up";
-            } else if (e.getKeyCode() == KeyEvent.VK_UP && inBattle && playerTurn) {
+            } else if (e.getKeyCode() == KeyEvent.VK_UP && inBattle && playerTurn || e.getKeyCode() == KeyEvent.VK_W && inBattle && playerTurn) {
                 battleSelect -= 1;
             }
 
-            if (e.getKeyCode() == KeyEvent.VK_DOWN && !inBattle) {
+            if (e.getKeyCode() == KeyEvent.VK_DOWN && !inBattle || e.getKeyCode() == KeyEvent.VK_S && !inBattle) {
                 held = true;
                 direction = "down";
-            } else if (e.getKeyCode() == KeyEvent.VK_DOWN && inBattle && playerTurn) {
+            } else if (e.getKeyCode() == KeyEvent.VK_DOWN && inBattle && playerTurn || e.getKeyCode() == KeyEvent.VK_S && inBattle && playerTurn) {
                 battleSelect += 1;
             }
 
@@ -454,6 +493,7 @@ public class Main extends JComponent {
     public Main() throws IOException {
         addKeyListener(new KBListener());
         addMouseListener(new MListener());
+        addMouseMotionListener(new MMListener());
         setFocusable(true);
     }
 
@@ -479,6 +519,7 @@ public class Main extends JComponent {
         enemyAttack = false;
         windowCount = 0;
         foodSpawned = false;
+        gEquipped = false;
         xTree1 = 600;
         xTree2 = 600;
 
@@ -734,6 +775,7 @@ public class Main extends JComponent {
 
                         sequencer.setSequence(doveMus8);
                         sequencer.start();
+                        score += 30;
                         JOptionPane.showMessageDialog(null, "level 5", "DOVE", JOptionPane.PLAIN_MESSAGE);
                         xPlayer = 150;
                         yPlayer = 150;
@@ -831,6 +873,8 @@ public class Main extends JComponent {
 
                         sequencer.setSequence(doveMus8);
                         sequencer.start();
+
+                        score += 30;
                         JOptionPane.showMessageDialog(null, "level 5", "DOVE", JOptionPane.PLAIN_MESSAGE);
                         xPlayer = 150;
                         yPlayer = 150;
@@ -1135,10 +1179,25 @@ public class Main extends JComponent {
                 jumpscare(frame);
             }
 
+            if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xGun, yGun, wGun, hGun) && level == 5 && !gEquipped) {
+                gEquipped = true;
+            }
+
             if (gaugeDamage && gaugeY < 70) {
                 gaugeY += 5;
             } else if (!gaugeDamage && gaugeY > 0) {
                 gaugeY -= 5;
+            }
+
+            if (drop.xDrop > 597 || Objects.requireNonNull(drop).xDrop < 0 || drop.yDrop > 412 || drop.yDrop < 0) {
+                drop = null;
+                pew = false;
+            }
+
+            if (pew) {
+                drop = new Droplet(xPlayer, yPlayer);
+                drop.Angle = angle;
+                pew = false;
             }
 
             frame.repaint();
