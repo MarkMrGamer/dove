@@ -88,7 +88,20 @@ public class Main extends JComponent {
     public static boolean gEquipped = false;
     public static boolean pew = false;
     public static double angle;
-    public static Droplet drop = null;
+    public static int xDrop = 999;
+    public static int yDrop = 999;
+    public static int xOldD = 999;
+    public static int yOldD = 999;
+    public static double aDrop;
+
+    // mugman1
+    public static int xMug1 = 53;
+    public static int yMug1 = 330;
+    public static int wMug1 = 100;
+    public static int hMug1 = 100;
+    public static boolean mug1Dead = false;
+    public static int m1xMove = 3;
+    public static int m1yMove = 3;
 
     // sprites
     public BufferedImage charImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/bird.png")));
@@ -108,6 +121,7 @@ public class Main extends JComponent {
     public BufferedImage gaugeImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/gauge.png")));
     public BufferedImage sliderImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/slider.png")));
     public BufferedImage mailImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/mail.jpg")));
+    public BufferedImage sambagImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/sambag.jpg")));
     public BufferedImage mugManImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/mugman.png")));
     public BufferedImage waterGImg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/watergun.png")));
     public BufferedImage bathBg = ImageIO.read(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/images/bathroom.png")));
@@ -124,7 +138,6 @@ public class Main extends JComponent {
     public static AudioInputStream gobbleSnd;
     public static AudioInputStream deadSnd;
     public static AudioInputStream goodbyeSnd;
-    public static AudioInputStream jackpotSnd;
 
     // music
 
@@ -231,6 +244,7 @@ public class Main extends JComponent {
     public static String dialogueMessage = "What will you do?";
     public static int battleSelect = 0;
     public static int cheatLevel = 0;
+    public static float jackpot = 0;
 
     // fonts
 
@@ -342,16 +356,21 @@ public class Main extends JComponent {
                 g2d.drawImage(waterGImg, xPlayer, yPlayer, wGun, hGun, this);
                 g2d.rotate(-Math.toRadians(angle), xPlayer, yPlayer);
                 g2d.setTransform(old);
-
-                if (drop != null) {
-                    g2d.rotate(Math.toRadians(drop.Angle), xPlayer, yPlayer);
-                    drop.xDrop += 1;
-                    g2d.fillRect(Objects.requireNonNull(drop).xDrop, drop.yDrop, 32, 32);
-                    g2d.setTransform(old);
-                }
             } else {
                 g2d.drawImage(waterGImg, xGun, yGun, wGun, hGun, this);
             }
+
+            if (!mug1Dead) g.drawImage(mugManImg, xMug1, yMug1, wMug1, hMug1, this);
+
+            AffineTransform old = g2d.getTransform();
+            g2d.rotate(Math.toRadians(aDrop), xOldD, yOldD);
+            g2d.setColor(Color.cyan);
+            g2d.fillRect(xDrop, yDrop, 43, 5);
+            g2d.rotate(-Math.toRadians(aDrop), xOldD, yOldD);
+            g2d.setTransform(old);
+
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, jackpot));
+            g2d.drawImage(sambagImg,0, 0, 640, 480, this);
         }
 
         if (dead) {
@@ -376,7 +395,7 @@ public class Main extends JComponent {
         }
     }
 
-    class MListener implements MouseListener {
+    static class MListener implements MouseListener {
         @Override
         public void mouseClicked(MouseEvent e) {
             System.out.println("Click");
@@ -386,6 +405,7 @@ public class Main extends JComponent {
             }
 
             if (gEquipped && !flappy && !pew) {
+                System.out.println("Pew");
                 pew = true;
             }
         }
@@ -463,7 +483,15 @@ public class Main extends JComponent {
             }
 
             if (e.getKeyCode() == KeyEvent.VK_F && !preloading) {
-                cheatLevel = 4;
+                sequencer.stop();
+                try {
+                    sequencer.setSequence(doveMus8);
+                } catch (InvalidMidiDataException ex) {
+                    throw new RuntimeException(ex);
+                }
+                sequencer.start();
+
+                level = 5;
             }
         }
 
@@ -507,7 +535,6 @@ public class Main extends JComponent {
         gobbleSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/gobble.wav"))));
         deadSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/dead.wav"))));
         goodbyeSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/goodbye.wav"))));
-        jackpotSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/jackpot.wav"))));
         clip = AudioSystem.getClip();
     }
 
@@ -1054,6 +1081,12 @@ public class Main extends JComponent {
             if (yPlayer > 412) yPlayer -= 2;
             if (yPlayer < 0) yPlayer += 2;
 
+            if (xMug1 > 597) xMug1 = -2;
+            if (xMug1 < 0) xMug1 = 2;
+
+            if (yMug1 > 412) yMug1 = -2;
+            if (yMug1 < 0) yMug1 = 2;
+
             // object collision
 
             if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xPotato, yPotato, wPotato, hPotato) && level == 1) {
@@ -1183,20 +1216,54 @@ public class Main extends JComponent {
                 gEquipped = true;
             }
 
+            if (coil(xPlayer, yPlayer, wPlayer, hPlayer, xMug1, yMug1, wMug1, hMug1) && !mug1Dead && level == 5) {
+                jackpot = 1;
+
+                xPlayer = 10;
+                yPlayer = 10;
+
+                AudioInputStream jackpotSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/jackpot.wav"))));
+
+                if (!clip.isRunning()) {
+                    clip.close();
+                    clip.open(jackpotSnd);
+                    clip.setFramePosition(0);
+                    clip.start();
+                }
+            }
+
+            if (jackpot > 0) jackpot -= 0.01f;
+            if (jackpot <= 0) jackpot = 0;
+
             if (gaugeDamage && gaugeY < 70) {
                 gaugeY += 5;
             } else if (!gaugeDamage && gaugeY > 0) {
                 gaugeY -= 5;
             }
 
-            if (drop.xDrop > 597 || Objects.requireNonNull(drop).xDrop < 0 || drop.yDrop > 412 || drop.yDrop < 0) {
-                drop = null;
-                pew = false;
+            if (!pew && xDrop > 597 || !pew && xDrop < 0 || !pew && yDrop > 412 || !pew && yDrop < 0) {
+                xDrop = 999;
+                yDrop = 999;
+            } else {
+                xDrop += 5;
             }
-
+            
             if (pew) {
-                drop = new Droplet(xPlayer, yPlayer);
-                drop.Angle = angle;
+                AudioInputStream squirtSnd = AudioSystem.getAudioInputStream(new BufferedInputStream(Objects.requireNonNull(GameFrame.class.getResourceAsStream("resources/sounds/squirt.wav"))));
+
+                if (!clip.isRunning()) {
+                    clip.close();
+                    clip.open(squirtSnd);
+                    clip.setFramePosition(0);
+                    clip.start();
+                }
+
+                xOldD = xPlayer;
+                yOldD = yPlayer - 13;
+
+                xDrop = xPlayer;
+                yDrop = yPlayer;
+                aDrop = angle;
                 pew = false;
             }
 
